@@ -1,7 +1,30 @@
 # PSU CONTROL UTILITY KIPRIM DC310S
 
 `psuctl1` is a simple shell script to control a PSU from a Linux/Unix terminal.  
-Compatible PSUs are variants of the `Owon`, for example the `KIPRIM DC310S`.  
+Compatible PSUs are variants of the `Owon SPE3103`, for example the `KIPRIM DC310S`.  
+
+## Setup
+
+~~~shell
+git clone https://github.com/andrsmllr/psuctl1
+cd psuctl1
+sudo chmod u+x ./psuctl1
+
+# You may want to add `psuctl1` to your `PATH` variable.
+# For example add the following line to your bashrc file:
+# echo "export PATH=$PATH:/path/to/psuctl1 >> ~/.bashrc
+
+# Or symlink `psuctl1` to a path that is already in your `PATH` variable.
+# For example, assuming your current working directory is the cloned working copy of this repo:
+# ln -s $(pwd) $HOME/.local/bin/psuctl1
+~~~
+
+Usually a user must be a member of the `dialout` group in order to have permission to use serial devices.  
+To become a member of the `dialout` group run:  
+
+~~~shell
+sudo usermod -a -G dialout $USER
+~~~
 
 ## Usage
 
