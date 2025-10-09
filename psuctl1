@@ -1,0 +1,296 @@
+#!/bin/bash
+
+get_current() {
+    echo "current?" > "$fd"
+    test -z $verbose || printf "Current (nominal value) [A]: "
+    head -c7 "$fd" | trim_output
+}
+
+get_current_limit() {
+    echo "current:limit?" > "$fd"
+    test -z $verbose || printf "Current-Limit (nominal value) [A]: "
+    head -c7 "$fd" | trim_output
+}
+
+get_id() {
+    echo "*idn?" > "$fd"
+    test -z $verbose || printf "Device Identification: "
+    head -c32 "$fd" | trim_output
+    echo ""
+}
+
+get_output() {
+    echo "output?" > "$fd"
+    test -z $verbose || printf "Output Enabled: "
+    head -c4 "$fd" | trim_output
+}
+
+get_voltage() {
+    echo "voltage?" > "$fd"
+    test -z $verbose || printf "Voltage (nominal value) [V]: "
+    head -c7 "$fd" | trim_output
+}
+
+get_voltage_limit() {
+    echo "voltage:limit?" > "$fd"
+    test -z $verbose || printf "Voltage-Limit (nominal value) [V]: "
+    head -c7 "$fd" | trim_output
+}
+
+measure_current() {
+    echo "measure:current?" > "$fd"
+    test -z $verbose || printf "Measured Current (actual value) [A]: "
+    head -c7 "$fd" | trim_output
+}
+
+measure_power() {
+    echo "measure:power?" > "$fd"
+    test -z $verbose || printf "Measured Power (actual value) [W]: "
+    head -c7 "$fd" | trim_output
+}
+
+measure_voltage() {
+    echo "measure:voltage?" > "$fd"
+    test -z $verbose || printf "Measured Voltage (actual value) [V]: "
+    head -c7 "$fd" | trim_output
+}
+
+# Arg1: 0 | 1 on | off
+set_output() {
+    echo "output $1" > "$fd"
+    test -z $verbose || echo "Output Enable set to: $1"
+}
+
+# Arg1: [d]d.ddd
+set_current() {
+    echo "current $1" > "$fd"
+    test -z $verbose || echo "Current set to [A]: $1"
+}
+
+# Arg1: [d]d.ddd
+set_current_limit() {
+    echo "current:limit $1" > "$fd"
+    test -z $verbose || echo "Current-Limit set to [A]: $1"
+}
+
+# Arg1: [d]d.ddd
+set_voltage() {
+    echo "voltage $1" > "$fd"
+    test -z $verbose || echo "Voltage set to [V]: $1"
+}
+
+# Arg1: [d]d.ddd
+set_voltage_limit() {
+    echo "voltage:limit $1" > "$fd"
+    test -z $verbose || echo "Voltage-Limit set to [V]: $1"
+}
+
+
+# Try to find the correct tty device by looking at vendor ID and product ID of connected USB devices.
+find_tty() {
+    if ! command -v lsusb >/dev/null 2>&1; then
+        echo "Warning: lsusb not found, skipping search for matching USB-serial-device" >&2
+        return
+    fi
+
+    if ! command -v readlink >/dev/null 2>&1; then
+        echo "Warning: readlink not found, skipping search for matching USB-serial-device" >&2
+        return
+    fi
+
+    # The KIPRIM DC310S uses a CH340 USB-to-serial adapter with vendor ID 0x1a86 and product ID 0x7523.
+    if lsusb -d 1a86:7523 > /dev/null; then
+        tty=$(readlink -e $(ls /dev/serial/by-id/usb-1a86*))
+    # <<<
+    # Add more compatible devices here as needed
+    # The X brand uses a Y USB-to-serial adapter with vendor ID 0x1234 and product ID 0x5678.
+    # elif lsusb -d 1234:5678; then
+    #    ... etc ...
+    # >>>
+    fi
+
+    if [ -z "$tty" ]; then
+        tty="/dev/ttyUSB0"
+        test -z $verbose || echo "Using default tty $tty" >&2
+    fi
+
+    echo "$tty"
+}
+
+help() {
+    echo ""
+    echo "    Commands:"
+    echo "        current      get|measure|set [value]  -  get, measure or set the output current"
+    echo "        currentlimit get|set         [value]  -  get or set the current limit"
+    echo "        output       get|set         [0|1]    -  get or set the output state (0=off, 1=on)"
+    echo "        power        measure                  -  measure the output power"
+    echo "        voltage      get|measure|set [value]  -  get, measure or set the output voltage"
+    echo "        voltagelimit get|set         [value]  -  get or set the voltage limit"
+    echo ""
+    echo "    Commands can be shortened in various ways, e.g. 'v' for 'voltage' and 'g' for 'get'."
+    echo ""
+    echo "    The following abbreviations are recognized:"
+    echo "        current, curr, c"
+    echo "        currentlimit, currlimit, currl, climit, clim, cl"
+    echo "        measure, meas, m"
+    echo "        output, out, o"
+    echo "        power, pow, p"
+    echo "        voltage, volt, v"
+    echo "        voltagelimit, voltlimit, voltl, vlimit, vlim, vl"
+    echo ""
+    echo "    If the second argument (i.e. get|measure|set) is ommitted then 'get' will be assumed."
+    echo "    In case the 'get' sub-command does not exist, then 'measure' is assumed."
+    echo ""
+
+}
+
+trim_output() {
+    # Remove carriage returns and remove double newlines from input
+    tr -d '\r' | tr --squeeze '\n'
+}
+
+usage() {
+    echo "Usage: $(basename $0) [-t tty] [-v] current|help|id|output|power|voltage get|measure|set [value]"
+    echo ""
+    echo "    value: a decimal value with up to 2 digits and up to 3 decimals (dd.ddd)"
+    echo "           value is only required when using the 'set' command and is otherwise ignored"
+    echo "           for the 'output' command, value must be 0 (off) or 1 (on)"
+    echo ""
+    echo "    Options:"
+    echo "        -t tty   specify the tty device (default: /dev/ttyUSB0)"
+    echo "        -v       verbose output"
+    echo ""
+    echo "    Examples: 1) $(basename $0) voltage get"
+    echo "              2) $(basename $0) v g"
+    echo "              3) $(basename $0) voltage set 3.300"
+    echo "              4) $(basename $0) v s 3.3"
+}
+
+#__completions() {
+# TODO: add bash completions
+#}
+
+
+# Process options
+if ! command -v getopts >/dev/null 2>&1; then
+    echo "Warning: getopts command not found, skipping option processing" >&2
+else
+    while getopts "t:v" opt; do
+        case $opt in
+            t) tty=$OPTARG; fd=$tty ;;
+            v) verbose=1 ;;
+            *) echo "invalid option $opt"; ;;
+        esac
+    done
+    shift $(($OPTIND - 1))
+fi
+
+# Find a serial interface on which the power supply unit (PSU) can be controlled
+tty=${tty:-$(find_tty)}
+fd=$tty
+
+test -z $verbose || echo "Using USB serial device for KIPRIM DC310S (CH340): $tty" >&2
+
+if [ -z "$tty" ]; then
+    tty="/dev/ttyUSB0"
+    echo "No tty device specified and no compatible USB-serial-device found, using default $tty" >&2
+
+fi
+
+if [ ! -e "$tty" ]; then
+    echo "Error: tty $tty does not exist" >&2
+    exit 1
+fi
+
+# Test permissions on tty
+test -r "$tty" || echo "Warning: no permission to read tty $tty" >&2
+test -w "$tty" || echo "Warning: no permission to write tty $tty" >&2
+
+# Configure tty using stty
+# 8 data bits, no parity, 1 stop bit, 115200 baud
+stty_exec=$(which stty)
+test -x "$stty_exec" || echo "Warning: no permission to execute stty $stty_exec - tty settings can not be changed and may be incorrect" >&2
+test -x "$stty_exec" && stty -F $tty cs8 115200
+
+
+# Shell option extglob enables pattern lists like @(a|b|c)
+shopt -s extglob
+current_cmd='@(current|curr|c)'
+currentlimit_cmd='@(currentlimit|currlimit|climit|clim|cl)'
+get_cmd='@(get|g)'
+help_cmd='@(help|h)'
+id_cmd='@(id)'
+measure_cmd='@(measure|meas|m)'
+output_cmd='@(output|out|o)'
+power_cmd='@(power|pow|p)'
+set_cmd='@(set|s)'
+version_cmd='@(version|ver)'
+voltage_cmd='@(voltage|volt|v)'
+voltagelimit_cmd='@(voltagelimit|voltlimit|voltl|vlimit|vlim|vl)'
+
+# Process command
+case $1 in
+    $current_cmd)
+        case $2 in
+            $get_cmd|'') get_current ;;
+            $measure_cmd) measure_current ;;
+            $set_cmd) set_current $3 ;;
+            *) echo "invalid argument: $2" >&2; usage; exit 1 ;;
+        esac
+        ;;
+
+    $currentlimit_cmd)
+        case $2 in
+            $get_cmd|'') get_current_limit ;;
+            $set_cmd) set_current_limit $3 ;;
+            *) echo "invalid argument: $2" >&2; usage; exit 1 ;;
+        esac
+        ;;
+
+    $help_cmd)
+        usage; help ;;
+
+    $id_cmd)
+        case $2 in
+            $get_cmd|'') get_id ;;
+            *) echo "invalid argument: $2" >&2; usage; exit 1 ;;
+        esac
+        ;;
+
+    $output_cmd)
+        case $2 in
+            $get_cmd|'') get_output ;;
+            $set_cmd) set_output $3 ;;
+            *) echo "invalid argument: $2" >&2; usage; exit 1 ;;
+         esac
+         ;;
+
+    $power_cmd)
+        case $2 in
+            $measure_cmd|'') measure_power ;;
+            *) echo "invalid argument: $2" >&2; usage; exit 1 ;;
+         esac
+         ;;
+
+    $version_cmd)
+        echo "psuctl1 version 0.1" ;;
+
+    $voltage_cmd)
+        case $2 in
+            $get_cmd|'') get_voltage ;;
+            $measure_cmd) measure_voltage ;;
+            $set_cmd) set_voltage $3 ;;
+            *) echo "invalid argument: $2" >&2; usage; exit 1 ;;
+         esac
+         ;;
+
+    $voltagelimit_cmd)
+        case $2 in
+            $get_cmd|'') get_voltage_limit ;;
+            $set_cmd) set_voltage_limit $3 ;;
+            *) echo "invalid argument: $2" >&2; usage; exit 1 ;;
+         esac
+         ;;
+
+    *) echo "invalid command: $2" >&2; usage; exit 1 ;;
+esac
