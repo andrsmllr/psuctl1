@@ -1,6 +1,8 @@
-# PSU CONTROL UTILITY KIPRIM DC310S
+# PSUCTL1 - A SIMPLE PSU CONTROL UTILITY
 
 `psuctl1` is a simple shell script to control a PSU from a Linux/Unix terminal.  
+`psuctl` performs this task by sending commands over a serial interface.
+Usually a compatible PSU is connected via USB and appears as a USB-serial-device in the system.  
 Compatible PSUs are variants of the `Owon SPE3103`, for example the `KIPRIM DC310S`.  
 
 ## Setup
