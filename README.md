@@ -88,7 +88,7 @@ psuctl1 output set 0
 psuctl1 o s 0
 ~~~
 
-### Read Output Voltage
+### Read Output Voltage (Nominal Value)
 
 ~~~shell
 psuctl1 voltage get
@@ -97,7 +97,7 @@ psuctl1 voltage get
 psuctl1 v g
 ~~~
 
-### Read Output Current
+### Read Output Current (Nominal Value)
 
 ~~~shell
 psuctl1 current get
@@ -106,7 +106,7 @@ psuctl1 current get
 psuctl1 c g
 ~~~
 
-### Set Output Voltage
+### Set Output Voltage (Nominal Value)
 
 ~~~shell
 psuctl1 voltage set 3.3
@@ -115,7 +115,7 @@ psuctl1 voltage set 3.3
 psuctl1 v s 3.3
 ~~~
 
-### Set Output Current
+### Set Output Current (Nominal Value)
 
 ~~~shell
 psuctl1 current set 1.0
@@ -124,7 +124,7 @@ psuctl1 current set 1.0
 psuctl1 c s 1.0
 ~~~
 
-### Measure Output Voltage
+### Measure Output Voltage (Actual Value)
 
 ~~~shell
 psuctl1 voltage measure
@@ -133,13 +133,22 @@ psuctl1 voltage measure
 psuctl1 v m
 ~~~
 
-### Measure Output Current
+### Measure Output Current (Actual Value)
 
 ~~~shell
 psuctl1 current measure
 
 # Short-hand command
 psuctl1 c m
+~~~
+
+### Measure Output Power (Actual Value)
+
+~~~shell
+psuctl1 power measure
+
+# Short-hand command
+psuctl1 p m
 ~~~
 
 ### Read PSU Identification
