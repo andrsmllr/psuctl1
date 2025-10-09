@@ -109,11 +109,6 @@ find_tty() {
     # >>>
     fi
 
-    if [ -z "$tty" ]; then
-        tty="/dev/ttyUSB0"
-        test -z $verbose || echo "Using default tty $tty" >&2
-    fi
-
     echo "$tty"
 }
 
@@ -188,8 +183,6 @@ fi
 # Find a serial interface on which the power supply unit (PSU) can be controlled
 tty=${tty:-$(find_tty)}
 fd=$tty
-
-test -z $verbose || echo "Using USB serial device for KIPRIM DC310S (CH340): $tty" >&2
 
 if [ -z "$tty" ]; then
     tty="/dev/ttyUSB0"
