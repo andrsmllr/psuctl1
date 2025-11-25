@@ -3,7 +3,7 @@
 `psuctl1` is a simple shell script to control a PSU from a Linux/Unix terminal.  
 `psuctl` performs this task by sending commands over a serial interface.
 Usually a compatible PSU is connected via USB and appears as a USB-serial-device in the system.  
-Compatible PSUs are variants of the `Owon SPE3103`, for example the `KIPRIM DC310S`.  
+Compatible PSUs are variants of the `Owon SPE` series (`SPE3102`, `SPE3103`, `SPE3051`, `SPE6102`, `SPE6103`, `SPE6053`), for example the `KIPRIM DC3x` series (`DC310S`, `DC310Pro`) or `KIPRIM DC6x` series (`DC605S` / `DC620S`).  
 
 ## Setup
 

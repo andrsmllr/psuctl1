@@ -187,7 +187,6 @@ fd=$tty
 if [ -z "$tty" ]; then
     tty="/dev/ttyUSB0"
     echo "No tty device specified and no compatible USB-serial-device found, using default $tty" >&2
-
 fi
 
 if [ ! -e "$tty" ]; then
